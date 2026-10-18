@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>CarritoGT - Tienda</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        .container { display: flex; gap: 20px; }
+        .productos, .carrito { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 50%; }
+        .producto-card { border-bottom: 1px solid #ddd; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        button { background-color: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        button.eliminar { background-color: #dc3545; }
+        button:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+<h1>CarritoGT - Migración Spring Boot</h1>
+
+<div class="container">
+    <!-- Lista de Productos desde la API -->
+    <div class="productos">
+        <h2>Productos Disponibles</h2>
+        <div id="lista-productos">Cargando productos...</div>
+    </div>
+
+    <!-- Carrito de Compras -->
+    <div class="carrito">
+        <h2>Tu Carrito</h2>
+        <ul id="lista-carrito"></ul>
+        <p><strong>Total: Q<span id="total-carrito">0.00</span></strong></p>
+    </div>
+</div>
+
+<script>
+    let carrito = [];
+
+
+    async function cargarProductos() {
+        try {
+            let respuesta = await fetch('http://localhost:8080/api/productos');
+            let productos = await respuesta.json();
+
+            let contenedor = document.getElementById('lista-productos');
+            contenedor.innerHTML = '';
+
+            productos.forEach(p => {
+                contenedor.innerHTML += `
+                        <div class="producto-card">
+                            <div>
+                                <strong>${p.nombre}</strong><br>
+                                Q${p.precio} (Stock: ${p.stock})
+                            </div>
+                            <button onclick="agregarAlCarrito(${p.id}, '${p.nombre}', ${p.precio})">Agregar</button>
+                        </div>
+                    `;
+            });
+        } catch (error) {
+            console.error("Error al cargar productos:", error);
+            document.getElementById('lista-productos').innerText = "Error al conectar con la API.";
+        }
+    }
+
+
+    function agregarAlCarrito(id, nombre, precio) {
+        carrito.push({ id, nombre, precio });
+        actualizarCarrito();
+    }
+
+    function eliminarDelCarrito(index) {
+        carrito.splice(index, 1);
+        actualizarCarrito();
+    }
+
+    function actualizarCarrito() {
+        let listaCarrito = document.getElementById('lista-carrito');
+        let totalSpan = document.getElementById('total-carrito');
+        listaCarrito.innerHTML = '';
+        let total = 0;
+
+        carrito.forEach((item, index) => {
+            total += item.precio;
+            listaCarrito.innerHTML += `
+                    <li>
+                        ${item.nombre} - Q${item.precio}
+                        <button class="eliminar" onclick="eliminarDelCarrito(${index})">X</button>
+                    </li>
+                `;
+        });
+
+        totalSpan.innerText = total.toFixed(2);
+    }
+
+
+    cargarProductos();
+</script>
+</body>
+</html>
